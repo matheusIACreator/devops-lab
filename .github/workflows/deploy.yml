@@ -1,0 +1,57 @@
+name: Deploy Azure
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'SHA já existente no ACR para rollback; vazio para construir o commit atual'
+        required: false
+        type: string
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: azure-lab-deploy
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 20
+    env:
+      REGISTRY: ${{ vars.AZURE_REGISTRY_NAME }}
+      RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      APP_NAME: ${{ vars.AZURE_APP_NAME }}
+      REQUESTED_TAG: ${{ inputs.image_tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci && npm run lint && npm run typecheck && npm run build
+        working-directory: web
+      - name: Validate image tag
+        shell: bash
+        run: |
+          TAG="${REQUESTED_TAG:-$GITHUB_SHA}"
+          [[ "$TAG" =~ ^[a-f0-9]{40}$ ]] || { echo 'Use um SHA completo de 40 caracteres'; exit 1; }
+          echo "IMAGE_TAG=$TAG" >> "$GITHUB_ENV"
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Build in ACR
+        if: inputs.image_tag == ''
+        run: az acr build --registry "$REGISTRY" --image "devops-lab:$IMAGE_TAG" .
+      - name: Deploy revision
+        shell: bash
+        run: |
+          SERVER=$(az acr show -n "$REGISTRY" --query loginServer -o tsv)
+          az containerapp update -g "$RESOURCE_GROUP" -n "$APP_NAME" --image "$SERVER/devops-lab:$IMAGE_TAG" --set-env-vars "APP_REVISION=$IMAGE_TAG" APP_ENVIRONMENT=azure --output none
+          az containerapp ingress update -g "$RESOURCE_GROUP" -n "$APP_NAME" --target-port 3000 --output none
+          FQDN=$(az containerapp show -g "$RESOURCE_GROUP" -n "$APP_NAME" --query properties.configuration.ingress.fqdn -o tsv)
+          echo "APP_URL=https://$FQDN" >> "$GITHUB_ENV"
+      - name: Smoke test deployed revision
+        run: node scripts/smoke.mjs "$APP_URL" "$IMAGE_TAG"
