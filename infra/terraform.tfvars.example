@@ -7,3 +7,4 @@ location        = "francecentral"
 # image    = "SEU_REGISTRY.azurecr.io/devops-lab:SEU_COMMIT"
 # app_port = 3000
 # revision = "SEU_COMMIT"
+# github_repository = "SEU_USUARIO/SEU_REPO"

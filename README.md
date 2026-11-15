@@ -2,6 +2,8 @@
 
 Um laboratório Azure de ponta a ponta: aplicação Next.js/React com shadcn/ui, API instrumentada, Docker, Terraform, GitHub Actions e Container Apps. O painel acompanha a própria API com dados reais do navegador, sem fingir métricas da conta Azure.
 
+[Abrir laboratório publicado](https://ca-devops-lab.mangoplant-1a4839a2.northeurope.azurecontainerapps.io) · [GitHub Actions](https://github.com/matheusIACreator/devops-lab/actions)
+
 ## Começar localmente
 
 Requisitos: Node.js 22+, npm e, para containers, Docker Desktop com Linux containers.
@@ -110,13 +112,15 @@ Se a assinatura limitar o número de ambientes Container Apps e você já tiver 
 
 `Validate` roda em PRs e pushes para `main`: lint, TypeScript, build, imagem Docker e smoke test dentro do container; outro job verifica Terraform. O workflow de deploy é manual e só deve ser usado **após o primeiro deploy da aplicação via Terraform (porta/probes 3000)**.
 
-1. Publique o repositório no seu GitHub e crie o environment `azure-lab`.
-2. Crie uma identidade de aplicação no Entra com credencial federada GitHub: issuer `https://token.actions.githubusercontent.com`, audience `api://AzureADTokenExchange`, subject `repo:SEU_USUARIO/SEU_REPO:environment:azure-lab`.
-3. Atribua `Contributor` a essa identidade **somente no resource group do lab**, além de `AcrPush` no registry para a publicação de imagens. É um escopo inicial de laboratório; refine para papéis personalizados antes de uso em produção. Com ambiente compartilhado em outro grupo, conceda nesse ambiente apenas as permissões necessárias de leitura e `Microsoft.App/managedEnvironments/join/action`, por um papel personalizado. Consulte os [papéis oficiais para containers](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/containers).
-4. Adicione as variáveis do environment: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_REGISTRY_NAME`, `AZURE_RESOURCE_GROUP`, `AZURE_APP_NAME`.
-5. Execute `Deploy Azure` na branch `main`. Sem `image_tag`, ele constrói e publica o SHA atual. Para rollback, informe um SHA completo de imagem já existente no ACR.
+1. Publique o repositório no seu GitHub.
+2. Em `terraform.tfvars`, configure `github_repository = "SEU_USUARIO/SEU_REPO"`. Gere, revise e aplique um novo plano Terraform. O arquivo `infra/github.tf` cria a identidade gerenciada de deploy e sua credencial federada para o environment `azure-lab`, sem senha.
+3. Os papéis são limitados aos recursos necessários: `Container Apps Contributor` no app, `AcrPush` no registry, `Managed Identity Operator` na identidade de runtime e `Container Apps Operator` no ambiente. Este último permite leitura/vínculo ao ambiente compartilhado sem gerenciar sua configuração. Consulte os [papéis oficiais para containers](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/containers).
+4. Execute `./scripts/configure-github.ps1 -Repository SEU_USUARIO/SEU_REPO -SubscriptionId SUA_ASSINATURA`. O script usa a autenticação existente do Git Credential Manager, configura o environment `azure-lab` restrito à branch `main` quando novo e preenche as seis variáveis Azure a partir dos outputs Terraform. Ele preserva as políticas de environments já existentes. Nenhum token é salvo em arquivo nem exibido.
+5. Execute `Deploy Azure` na branch `main`. Sem `image_tag`, ele constrói e publica o SHA atual. Para rollback, informe um SHA completo de imagem já existente no ACR. Depois do smoke test, o workflow testa a interface desktop/celular na URL publicada e salva screenshots e traces como artifacts.
 
 Não há client secret no repositório. O deploy valida código/build e executa smoke test com revisão esperada ao final. Falha no smoke sinaliza falha do workflow; rollback é manual. Restrinja branches no environment; configure revisão de deploy se seu plano GitHub oferecer esse recurso. O histórico de execuções é visto no GitHub Actions, não inferido pela tela do laboratório.
+
+Para executar os mesmos testes contra um deploy a partir de PowerShell: `$env:PLAYWRIGHT_BASE_URL = "https://SEU_APP"; npm run test:e2e` dentro de `web`. Sem essa variável, os testes iniciam/usam o servidor local.
 
 ## Observar e praticar
 
@@ -154,7 +158,7 @@ terraform -chdir=infra apply destroy.tfplan
 az group exists --name rg-devops-lab
 ```
 
-O último comando deve retornar `false`. Remova separadamente a identidade de deploy e a credencial federada no Entra, se criadas para esse laboratório. Não dependa da expiração do crédito para guardar os dados.
+O último comando deve retornar `false`. A identidade de deploy, a confiança OIDC e suas atribuições de acesso são gerenciadas pelo Terraform e entram no destroy, incluindo a atribuição no ambiente compartilhado. O ambiente compartilhado é apenas referenciado e permanece intacto. Remova o environment `azure-lab` no GitHub se não precisar mais dele. Não dependa da expiração do crédito para guardar os dados.
 
 ## Referências
 

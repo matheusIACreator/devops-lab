@@ -61,3 +61,20 @@ jobs:
           echo "APP_URL=https://$FQDN" >> "$GITHUB_ENV"
       - name: Smoke test deployed revision
         run: node scripts/smoke.mjs "$APP_URL" "$IMAGE_TAG"
+      - name: Install browser for live tests
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+      - name: Test deployed dashboard on desktop and mobile
+        working-directory: web
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ env.APP_URL }}
+        run: npm run test:e2e
+      - name: Save browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-browser-evidence
+          path: |
+            work/dashboard-*.png
+            web/test-results/
+          retention-days: 7
