@@ -27,6 +27,14 @@ if ($LASTEXITCODE -ne 0) { throw 'Terraform outputs unavailable.' }
 $outputs = ($rawOutputs -join "`n") | ConvertFrom-Json
 $repo = Invoke-RepoApi -Method GET -Path '' -Body $null
 if (!$repo.permissions.admin) { throw 'Repository administration permission required.' }
+$oidc = Invoke-RepoApi -Method GET -Path 'actions/oidc/customization/sub' -Body $null
+if (!$oidc.use_default -or !$oidc.PSObject.Properties['sub_claim_prefix']) {
+  throw 'Custom OIDC subject: inspect the GitHub sub claim and configure the Azure trust explicitly.'
+}
+$expectedSubject = "$($oidc.sub_claim_prefix):environment:azure-lab"
+if ($outputs.github_oidc_subject.value -ne $expectedSubject) {
+  throw "OIDC subject mismatch. Configure github_oidc_subject = `"$expectedSubject`" and apply Terraform first."
+}
 
 # Only main may obtain an environment OIDC token. Existing environments are preserved.
 $environmentNames = @((Invoke-RepoApi -Method GET -Path 'environments' -Body $null).environments | ForEach-Object { $_.name })

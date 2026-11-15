@@ -8,3 +8,4 @@ location        = "francecentral"
 # app_port = 3000
 # revision = "SEU_COMMIT"
 # github_repository = "SEU_USUARIO/SEU_REPO"
+# github_oidc_subject = "repo:OWNER@OWNER_ID/REPO@REPO_ID:environment:azure-lab"

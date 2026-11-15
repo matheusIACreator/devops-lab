@@ -8,6 +8,16 @@ variable "github_repository" {
   }
 }
 
+variable "github_oidc_subject" {
+  type        = string
+  default     = null
+  description = "Claim sub exato do GitHub; repositorios novos incluem owner_id e repo_id."
+  validation {
+    condition     = var.github_oidc_subject == null ? true : can(regex("^repo:[A-Za-z0-9_.-]+(@[0-9]+)?/[A-Za-z0-9_.-]+(@[0-9]+)?:environment:azure-lab$", var.github_oidc_subject))
+    error_message = "Informe o sub exato para o environment azure-lab, incluindo IDs imutaveis quando presentes."
+  }
+}
+
 resource "azurerm_user_assigned_identity" "github" {
   count               = var.github_repository == null ? 0 : 1
   name                = "id-${var.name}-github"
@@ -17,13 +27,18 @@ resource "azurerm_user_assigned_identity" "github" {
 }
 
 resource "azurerm_federated_identity_credential" "github" {
-  count               = var.github_repository == null ? 0 : 1
-  name                = "github-azure-lab"
-  resource_group_name = azurerm_resource_group.lab.name
-  parent_id           = azurerm_user_assigned_identity.github[0].id
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = "https://token.actions.githubusercontent.com"
-  subject             = "repo:${var.github_repository}:environment:azure-lab"
+  count                     = var.github_repository == null ? 0 : 1
+  name                      = "github-azure-lab"
+  user_assigned_identity_id = azurerm_user_assigned_identity.github[0].id
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = "https://token.actions.githubusercontent.com"
+  subject                   = var.github_oidc_subject == null ? "" : var.github_oidc_subject
+  lifecycle {
+    precondition {
+      condition     = var.github_oidc_subject != null
+      error_message = "Configure github_oidc_subject com o claim sub exato antes de habilitar o deploy."
+    }
+  }
 }
 
 resource "azurerm_role_assignment" "github_app" {
@@ -60,4 +75,8 @@ output "github_client_id" {
 
 output "github_tenant_id" {
   value = var.github_repository == null ? null : azurerm_user_assigned_identity.github[0].tenant_id
+}
+
+output "github_oidc_subject" {
+  value = var.github_repository == null ? null : var.github_oidc_subject
 }
