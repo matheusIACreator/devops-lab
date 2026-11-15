@@ -100,7 +100,7 @@ $tag = git rev-parse HEAD
 # Revise e aplique o plano indicado pelo script.
 ```
 
-O script usa `az acr build`, sem exigir Docker local. Esse build também consome crédito. O segundo plano troca imagem, porta e probes para a aplicação na porta 3000. Após aplicar, **grave `image`, `app_port = 3000` e `revision` em `terraform.tfvars`** com os mesmos valores. Faça isso também após cada deploy/rollback por pipeline antes de aplicar Terraform novamente, evitando que a infraestrutura volte para uma imagem antiga. Não execute Terraform e o pipeline ao mesmo tempo.
+O script usa Docker local e `az acr login` para publicar no ACR. Isso evita a restrição `TasksOperationsNotAllowed` de assinaturas de avaliação. Para construir, fazer smoke test dentro do container e publicar antes de preparar o plano, use `./scripts/publish-image.ps1 -Registry SEU_REGISTRY`, seguido de `./scripts/deploy.ps1 -ImageTag $tag -SkipBuild`. O segundo plano troca imagem, porta e probes para a aplicação na porta 3000. Após aplicar, **grave `image`, `app_port = 3000` e `revision` em `terraform.tfvars`** com os mesmos valores. Faça isso também após cada deploy/rollback por pipeline antes de aplicar Terraform novamente, evitando que a infraestrutura volte para uma imagem antiga. Não execute Terraform e o pipeline ao mesmo tempo.
 
 O estado fica local nesta primeira versão: **não o envie ao Git**. Guarde backup seguro até remover todos os recursos. Para trabalho em equipe, migre para backend Azure Blob com locking antes de compartilhar a gestão do ambiente.
 
@@ -112,7 +112,7 @@ Se a assinatura limitar o número de ambientes Container Apps e você já tiver 
 
 1. Publique o repositório no seu GitHub e crie o environment `azure-lab`.
 2. Crie uma identidade de aplicação no Entra com credencial federada GitHub: issuer `https://token.actions.githubusercontent.com`, audience `api://AzureADTokenExchange`, subject `repo:SEU_USUARIO/SEU_REPO:environment:azure-lab`.
-3. Atribua `Contributor` a essa identidade **somente no resource group do lab**. É um escopo inicial de laboratório que permite ACR Tasks e atualização do Container App; refine para papéis personalizados antes de uso em produção.
+3. Atribua `Contributor` a essa identidade **somente no resource group do lab**, além de `AcrPush` no registry para a publicação de imagens. É um escopo inicial de laboratório; refine para papéis personalizados antes de uso em produção. Com ambiente compartilhado em outro grupo, pode ser necessário o papel `Container Apps ManagedEnvironments User` nesse ambiente para associar novas revisões.
 4. Adicione as variáveis do environment: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_REGISTRY_NAME`, `AZURE_RESOURCE_GROUP`, `AZURE_APP_NAME`.
 5. Execute `Deploy Azure` na branch `main`. Sem `image_tag`, ele constrói e publica o SHA atual. Para rollback, informe um SHA completo de imagem já existente no ACR.
 

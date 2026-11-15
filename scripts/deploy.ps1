@@ -13,7 +13,11 @@ $infra = ($outputs -join "`n") | ConvertFrom-Json
 $registry = $infra.registry_name.value
 $image = "$($infra.registry_server.value)/devops-lab:$ImageTag"
 if (!$SkipBuild) {
-  az acr build --registry $registry --image "devops-lab:$ImageTag" .
+  docker build -t $image .
+  Check-Exit
+  az acr login --name $registry
+  Check-Exit
+  docker push $image
   Check-Exit
 }
 # O Terraform também atualiza probes e porta no primeiro deploy.
