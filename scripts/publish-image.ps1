@@ -2,7 +2,7 @@ param([string]$Registry = 'lab5c1e2bfd43205c96')
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 Set-Location (Split-Path $PSScriptRoot -Parent)
-function Check-Exit { if ($LASTEXITCODE -ne 0) { throw "Comando falhou: código $LASTEXITCODE" } }
+function Check-Exit { if ($LASTEXITCODE -ne 0) { throw "Comando falhou: exit code $LASTEXITCODE" } }
 $tag = git rev-parse HEAD
 Check-Exit
 $server = az acr show -n $Registry --query loginServer -o tsv

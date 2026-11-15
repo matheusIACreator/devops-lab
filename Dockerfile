@@ -8,7 +8,7 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY web/ .
-RUN npm run build
+RUN test -f app/api/work/route.ts && npm run build
 
 FROM node:22-alpine AS runner
 WORKDIR /app

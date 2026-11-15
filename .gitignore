@@ -10,7 +10,8 @@ coverage/
 *.tfplan
 terraform.tfvars
 .tools/
-work/
+/work/
+/web/work/
 test-results/
 playwright-report/
 *.log

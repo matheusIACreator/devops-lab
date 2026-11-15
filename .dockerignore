@@ -4,8 +4,8 @@
 **/.env*
 infra
 .tools
-work
-**/work
+/work
+/web/work
 **/test-results
 **/playwright-report
 **/*.tsbuildinfo
