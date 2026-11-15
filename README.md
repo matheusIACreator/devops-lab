@@ -112,7 +112,7 @@ Se a assinatura limitar o número de ambientes Container Apps e você já tiver 
 
 1. Publique o repositório no seu GitHub e crie o environment `azure-lab`.
 2. Crie uma identidade de aplicação no Entra com credencial federada GitHub: issuer `https://token.actions.githubusercontent.com`, audience `api://AzureADTokenExchange`, subject `repo:SEU_USUARIO/SEU_REPO:environment:azure-lab`.
-3. Atribua `Contributor` a essa identidade **somente no resource group do lab**, além de `AcrPush` no registry para a publicação de imagens. É um escopo inicial de laboratório; refine para papéis personalizados antes de uso em produção. Com ambiente compartilhado em outro grupo, pode ser necessário o papel `Container Apps ManagedEnvironments User` nesse ambiente para associar novas revisões.
+3. Atribua `Contributor` a essa identidade **somente no resource group do lab**, além de `AcrPush` no registry para a publicação de imagens. É um escopo inicial de laboratório; refine para papéis personalizados antes de uso em produção. Com ambiente compartilhado em outro grupo, conceda nesse ambiente apenas as permissões necessárias de leitura e `Microsoft.App/managedEnvironments/join/action`, por um papel personalizado. Consulte os [papéis oficiais para containers](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/containers).
 4. Adicione as variáveis do environment: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_REGISTRY_NAME`, `AZURE_RESOURCE_GROUP`, `AZURE_APP_NAME`.
 5. Execute `Deploy Azure` na branch `main`. Sem `image_tag`, ele constrói e publica o SHA atual. Para rollback, informe um SHA completo de imagem já existente no ACR.
 

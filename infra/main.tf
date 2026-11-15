@@ -60,6 +60,7 @@ resource "azurerm_container_app" "lab" {
   resource_group_name          = azurerm_resource_group.lab.name
   container_app_environment_id = var.existing_environment_id != null ? var.existing_environment_id : azurerm_container_app_environment.lab[0].id
   revision_mode                = "Single"
+  workload_profile_name        = var.workload_profile_name
   tags                         = local.tags
 
   identity {

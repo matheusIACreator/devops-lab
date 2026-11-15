@@ -29,6 +29,12 @@ variable "existing_environment_id" {
   description = "Opcional: ambiente Container Apps já existente, apenas referenciado e nunca alterado/destruído por este projeto."
 }
 
+variable "workload_profile_name" {
+  type        = string
+  default     = "Consumption"
+  description = "Perfil de consumo do ambiente; use null para ambientes legados sem perfis."
+}
+
 variable "image" {
   type        = string
   default     = "mcr.microsoft.com/k8se/quickstart:latest"
