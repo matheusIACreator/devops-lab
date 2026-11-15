@@ -14,5 +14,5 @@ output "registry_server" {
   value = azurerm_container_registry.lab.login_server
 }
 output "workspace_id" {
-  value = azurerm_log_analytics_workspace.lab.workspace_id
+  value = var.existing_environment_id == null ? azurerm_log_analytics_workspace.lab[0].workspace_id : null
 }

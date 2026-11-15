@@ -5,6 +5,10 @@
 infra
 .tools
 work
+**/work
+**/test-results
+**/playwright-report
+**/*.tsbuildinfo
 docs
 tests
 scripts

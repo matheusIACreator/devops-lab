@@ -1,6 +1,8 @@
 subscription_id = "00000000-0000-0000-0000-000000000000"
 name            = "devops-lab"
 location        = "francecentral"
+# Assinaturas de avaliação podem limitar a um único ambiente Container Apps.
+# existing_environment_id = "/subscriptions/.../resourceGroups/.../providers/Microsoft.App/managedEnvironments/..."
 # Depois do primeiro build no ACR:
 # image    = "SEU_REGISTRY.azurecr.io/devops-lab:SEU_COMMIT"
 # app_port = 3000

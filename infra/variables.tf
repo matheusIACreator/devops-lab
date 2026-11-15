@@ -23,6 +23,12 @@ variable "resource_group_location" {
   description = "Local dos metadados do grupo; independente da região dos recursos."
 }
 
+variable "existing_environment_id" {
+  type        = string
+  default     = null
+  description = "Opcional: ambiente Container Apps já existente, apenas referenciado e nunca alterado/destruído por este projeto."
+}
+
 variable "image" {
   type        = string
   default     = "mcr.microsoft.com/k8se/quickstart:latest"

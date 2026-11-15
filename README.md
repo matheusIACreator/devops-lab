@@ -104,6 +104,8 @@ O script usa `az acr build`, sem exigir Docker local. Esse build também consome
 
 O estado fica local nesta primeira versão: **não o envie ao Git**. Guarde backup seguro até remover todos os recursos. Para trabalho em equipe, migre para backend Azure Blob com locking antes de compartilhar a gestão do ambiente.
 
+Se a assinatura limitar o número de ambientes Container Apps e você já tiver um, informe seu ID em `existing_environment_id`. O Terraform apenas referencia esse ambiente; não o altera nem o destrói. Nesse modo, os logs usam a configuração do ambiente compartilhado, e o workspace/cap de 0,1 GB deste laboratório não são criados. O tráfego e os logs do lab podem consumir recursos desse ambiente. O registry continua na região `location`, enquanto a aplicação fica na região do ambiente referenciado.
+
 ## CI/CD e OIDC
 
 `Validate` roda em PRs e pushes para `main`: lint, TypeScript, build, imagem Docker e smoke test dentro do container; outro job verifica Terraform. O workflow de deploy é manual e só deve ser usado **após o primeiro deploy da aplicação via Terraform (porta/probes 3000)**.

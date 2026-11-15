@@ -14,6 +14,7 @@ resource "azurerm_resource_group" "lab" {
 }
 
 resource "azurerm_log_analytics_workspace" "lab" {
+  count               = var.existing_environment_id == null ? 1 : 0
   name                = "log-${var.name}"
   resource_group_name = azurerm_resource_group.lab.name
   location            = var.location
@@ -46,17 +47,18 @@ resource "azurerm_role_assignment" "pull" {
 }
 
 resource "azurerm_container_app_environment" "lab" {
+  count                      = var.existing_environment_id == null ? 1 : 0
   name                       = "cae-${var.name}"
   resource_group_name        = azurerm_resource_group.lab.name
   location                   = var.location
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.lab.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.lab[0].id
   tags                       = local.tags
 }
 
 resource "azurerm_container_app" "lab" {
   name                         = "ca-${var.name}"
   resource_group_name          = azurerm_resource_group.lab.name
-  container_app_environment_id = azurerm_container_app_environment.lab.id
+  container_app_environment_id = var.existing_environment_id != null ? var.existing_environment_id : azurerm_container_app_environment.lab[0].id
   revision_mode                = "Single"
   tags                         = local.tags
 
