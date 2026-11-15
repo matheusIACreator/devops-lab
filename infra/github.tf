@@ -55,6 +55,13 @@ resource "azurerm_role_assignment" "github_push" {
   principal_id         = azurerm_user_assigned_identity.github[0].principal_id
 }
 
+resource "azurerm_role_assignment" "github_registry_reader" {
+  count                = var.github_repository == null ? 0 : 1
+  scope                = azurerm_container_registry.lab.id
+  role_definition_name = "Reader"
+  principal_id         = azurerm_user_assigned_identity.github[0].principal_id
+}
+
 resource "azurerm_role_assignment" "github_identity" {
   count                = var.github_repository == null ? 0 : 1
   scope                = azurerm_user_assigned_identity.app.id
