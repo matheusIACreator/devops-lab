@@ -17,6 +17,7 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
+      - run: node --test scripts/smoke.test.mjs
       - run: npm ci
         working-directory: web
       - run: npm run lint && npm run typecheck && npm run build

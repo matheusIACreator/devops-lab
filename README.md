@@ -120,6 +120,8 @@ Se a assinatura limitar o número de ambientes Container Apps e você já tiver 
 
 Não há client secret no repositório. O deploy valida código/build e executa smoke test com revisão esperada ao final. Falha no smoke sinaliza falha do workflow; rollback é manual. Restrinja branches no environment; configure revisão de deploy se seu plano GitHub oferecer esse recurso. O histórico de execuções é visto no GitHub Actions, não inferido pela tela do laboratório.
 
+O smoke test aguarda por até 120 segundos a revisão esperada em `/api/health` e `/api/version`, pois a Azure pode manter a revisão anterior saudável durante a troca de tráfego. Se a revisão correta não aparecer, o teste falha e informa o último estado observado. Os testes `node --test scripts/smoke.test.mjs` cobrem a troca com sucesso e a permanência indevida da revisão antiga.
+
 Para executar os mesmos testes contra um deploy a partir de PowerShell: `$env:PLAYWRIGHT_BASE_URL = "https://SEU_APP"; npm run test:e2e` dentro de `web`. Sem essa variável, os testes iniciam/usam o servidor local.
 
 ## Observar e praticar
